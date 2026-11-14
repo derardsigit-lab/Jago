@@ -1,0 +1,556 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title> NERO Finance</title>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-database-compat.js"></script>
+
+<style>
+*{box-sizing:border-box}
+:root{
+--green:#285c4b;--mint:#bdebd5;--bg:#f4f1fb;
+--purple:#e8e6ff;--text:#28243a;--muted:#8b879c;
+}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{
+width:225px;background:#214b3e;color:white;padding:25px 16px;
+display:flex;flex-direction:column;flex-shrink:0
+}
+.logo{text-align:center;margin-bottom:35px}
+.logo-icon{font-size:45px}
+.logo h2{margin:5px;font-size:24px}
+.logo small{color:#b7d7c9}
+.menu button{
+display:flex;align-items:center;gap:13px;width:100%;
+padding:15px;border:0;background:transparent;color:white;
+border-radius:15px;text-align:left;margin:5px 0
+}
+.menu button.active,.menu button:hover{background:#80b79a}
+.menu span{font-size:20px;width:25px}
+.side-bottom{margin-top:auto;background:#315c4c;padding:15px;border-radius:18px}
+.content{flex:1;min-width:0;padding:24px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:20px}
+.topbar h1{font-size:27px;margin:0 0 8px}
+.topbar p{margin:0;color:var(--muted)}
+.period{border:1px solid #ddd;background:white;padding:12px;border-radius:14px}
+.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{
+background:#fff;border-radius:24px;padding:20px;
+box-shadow:0 8px 25px #42335c0b;margin-bottom:16px;
+border:1px solid #f0edf5
+}
+.metric{display:flex;align-items:center;gap:13px}
+.metric-icon{font-size:36px;background:#eef9f3;padding:12px;border-radius:17px}
+.metric small{color:var(--muted)}
+.metric h2{font-size:20px;margin:8px 0;color:#244d40;overflow-wrap:anywhere}
+.metric p{font-size:12px;color:#4b9875;margin:0}
+.hero{
+background:linear-gradient(120deg,#e8e5ff,#fff0ed);
+border-radius:25px;padding:22px;min-height:150px;
+display:flex;justify-content:space-between;align-items:center;margin-bottom:16px
+}
+.hero h2{font-size:25px;margin:8px 0}
+.hero p{color:#817b99;margin:0}
+.hero-art{font-size:75px}
+h3{font-size:17px;margin:0 0 17px}
+input,select{
+width:100%;padding:13px;border:1px solid #e0dfeb;
+border-radius:12px;background:white;color:#28243a
+}
+label{display:block;font-size:12px;color:#77738a;margin:12px 0 6px}
+.btn{border:0;padding:13px 17px;border-radius:12px;background:#315f4d;color:white;font-weight:bold;margin-top:12px}
+.btn.light{background:#eaf6ef;color:#315f4d}
+.btn.red{background:#ffe7eb;color:#b93451}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.item{padding:13px;border-bottom:1px solid #f0edf5;font-size:13px;line-height:1.6}
+.item b{color:#315f4d}
+.item small{color:#8b879c}
+.tag{display:inline-block;background:#e4f6eb;color:#327554;padding:5px 10px;border-radius:10px;font-size:11px}
+.muted{color:var(--muted);font-size:12px}
+.chart{height:180px;display:flex;align-items:end;justify-content:space-around;border-bottom:1px solid #ddd;gap:10px;padding-top:15px}
+.barwrap{display:flex;align-items:end;gap:5px;height:100%}
+.bar{width:30px;border-radius:9px 9px 0 0;background:linear-gradient(#9be2bf,#51ac82)}
+.bar2{background:linear-gradient(#ffe6bc,#e6b86c)}
+.chart-label{display:flex;justify-content:space-around;font-size:11px;color:#888;margin-top:8px}
+.dashboard-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:15px}
+button:disabled{opacity:.5}
+nav.mobile{display:none}
+#connection{font-size:11px;color:#5b9c7b}
+@media(max-width:900px){
+.sidebar{width:75px;padding:15px 8px}
+.logo h2,.logo small,.menu button .txt,.side-bottom{display:none}
+.logo-icon{font-size:30px}
+.menu button{justify-content:center;padding:13px}
+.content{padding:15px}
+.dashboard-grid{grid-template-columns:1fr}
+}
+@media(max-width:550px){
+.sidebar{display:none}
+.content{padding:14px;padding-bottom:90px}
+.topbar h1{font-size:22px}
+.cards{grid-template-columns:1fr 1fr;gap:8px}
+.card{padding:15px;border-radius:18px}
+.metric{gap:8px}
+.metric-icon{font-size:24px;padding:9px}
+.metric h2{font-size:16px}
+.hero-art{font-size:48px}
+nav.mobile{
+display:flex;position:fixed;bottom:0;left:0;right:0;
+background:#fff;box-shadow:0 -5px 20px #0001;
+justify-content:space-around;padding:10px 0;z-index:10
+}
+nav.mobile button{border:0;background:white;color:#888;font-size:10px;margin:0;padding:5px}
+nav.mobile button.active{color:#287552}
+nav.mobile span{display:block;font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+<aside class="sidebar">
+<div class="logo">
+<div class="logo-icon">🌿</div>
+<h2>Greenville</h2>
+<small>Grow Together</small>
+</div>
+<div class="menu">
+<button class="active" onclick="page('home',this)"><span>🏠</span><div class="txt">Dashboard</div></button>
+<button onclick="page('transaksi',this)"><span>📋</span><div class="txt">Transaksi</div></button>
+<button onclick="page('produk',this)"><span>📦</span><div class="txt">Stok & Produk</div></button>
+<button onclick="page('customer',this)"><span>👥</span><div class="txt">Customer</div></button>
+<button onclick="page('referral',this)"><span>📣</span><div class="txt">Referral</div></button>
+<button onclick="page('laporan',this)"><span>📊</span><div class="txt">Laporan</div></button>
+</div>
+<div class="side-bottom">☕ Bersama Greenville,<br>kelola bisnis lebih mudah!</div>
+</aside>
+
+<div class="content">
+<div class="topbar">
+<div>
+<h1>Halo, Owner! 👋</h1>
+<p>Semoga bisnisnya makin lancar hari ini!</p>
+<div id="connection">☁ Menghubungkan Firebase...</div>
+</div>
+<input class="period" type="month" id="periode" style="width:160px">
+</div>
+
+<!-- DASHBOARD -->
+<section id="home" class="page active">
+<div class="hero">
+<div><small>NERO FINANCE</small><h2>Grow Together </h2><p></p></div>
+<div class="hero-art"></div>
+</div>
+<div class="cards">
+<div class="card metric"><div class="metric-icon">💼</div><div><small>Total Modal</small><h2 id="modal">Rp0</h2><p>Barang periode ini</p></div></div>
+<div class="card metric"><div class="metric-icon">🪙</div><div><small>Total Penjualan</small><h2 id="omzet">Rp0</h2><p>Omzet periode</p></div></div>
+<div class="card metric"><div class="metric-icon">🏆</div><div><small>Keuntungan Bersih</small><h2 id="profit">Rp0</h2><p>Profit periode</p></div></div>
+</div>
+
+<div class="dashboard-grid">
+<div>
+<div class="card">
+<h3>📊 Ringkasan Keuangan</h3>
+<div class="row">
+<button class="btn light" onclick="setRange(7)">7 Hari</button>
+<button class="btn" onclick="setRange(30)">30 Hari</button>
+<button class="btn light" onclick="setRange(0)">Bulanan</button>
+</div>
+<div class="chart" id="chart"></div>
+<div class="chart-label"><span>Modal</span><span>Penjualan</span></div>
+</div>
+<div class="card">
+<h3>📋 Daftar Transaksi Terbaru</h3>
+<div id="recent"></div>
+<button class="btn light" onclick="page('transaksi')">Lihat Semua →</button>
+</div>
+</div>
+<div>
+<div class="card">
+<h3>📅 Pembayaran Customer</h3>
+<div class="metric-icon">⏰</div>
+<p>Jatuh tempo tanggal 28 setiap bulan</p>
+<h2 id="dueTotal">Rp0</h2>
+<span class="tag" id="dueCount">0 transaksi menunggak</span>
+<div id="dueList"></div>
+</div>
+<div class="card">
+<h3>📣 Komisi Referral</h3>
+<div class="metric-icon">🎁</div>
+<p>Total komisi periode</p>
+<h2 id="refTotal">Rp0</h2>
+<div id="refList"></div>
+</div>
+<div class="card">
+<h3>📈 Keuntungan per Produk</h3>
+<div id="productProfit"></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- TRANSAKSI -->
+<section id="transaksi" class="page">
+<div class="card">
+<h3>📦 Barang Keluar</h3>
+<label>Customer</label><select id="tcustomer"></select>
+<label>Barang dari katalog</label><select id="tproduct"></select>
+<label>Jumlah barang</label><input id="qty" type="number" value="1" min="1">
+<div class="row">
+<div><label>Modal / unit</label><input id="costView" disabled></div>
+<div><label>Harga jual / unit</label><input id="saleView" disabled></div>
+</div>
+<button class="btn" onclick="addTransaction()">+ Simpan Barang Keluar</button>
+<p class="muted">Harga otomatis mengikuti katalog produk. Varian tidak perlu diisi.</p>
+</div>
+<div class="card"><h3>Riwayat Barang Keluar</h3><div id="transactions"></div></div>
+</section>
+
+<!-- PRODUK -->
+<section id="produk" class="page">
+<div class="card">
+<h3>📦 Tambah Produk</h3>
+<label>Nama barang</label><input id="pname" placeholder="Contoh: Tumbler Premium">
+<label>Modal per unit</label><input type="number" id="pcost">
+<label>Harga jual per unit</label><input type="number" id="psale">
+<button class="btn" onclick="addProduct()">+ Simpan Produk</button>
+</div>
+<div class="card"><h3>List Barang</h3><div id="products"></div></div>
+</section>
+
+<!-- CUSTOMER -->
+<section id="customer" class="page">
+<div class="card">
+<h3>👥 Tambah Customer</h3>
+<label>Nama customer</label><input id="cname">
+<label>WhatsApp</label><input id="cwa">
+<button class="btn" onclick="addCustomer()">+ Simpan Customer</button>
+</div>
+<div class="card"><h3>Daftar Customer</h3><div id="customers"></div></div>
+</section>
+
+<!-- REFERRAL -->
+<section id="referral" class="page">
+<div class="card">
+<h3>📣 Referral</h3>
+<label>Nama referral</label><input id="rname">
+<label>Komisi per transaksi</label><input type="number" id="rfee">
+<button class="btn" onclick="addReferral()">+ Simpan Referral</button>
+</div>
+<div class="card"><h3>Daftar Referral</h3><div id="referrals"></div></div>
+</section>
+
+<!-- LAPORAN -->
+<section id="laporan" class="page">
+<div class="card">
+<h3>📊 Laporan Bulanan</h3>
+<div id="report"></div>
+<button class="btn" onclick="exportCSV()">Export CSV</button>
+<button class="btn light" onclick="backup()">Backup JSON</button>
+</div>
+<div class="card">
+<h3>💵 Catat Pembayaran</h3>
+<label>Transaksi</label><select id="paytx"></select>
+<label>Nominal pembayaran</label><input id="payamount" type="number">
+<label>Tanggal pembayaran</label><input id="paydate" type="date">
+<button class="btn" onclick="addPayment()">+ Catat Pembayaran</button>
+</div>
+<div class="card"><h3>Riwayat Pembayaran</h3><div id="payments"></div></div>
+</section>
+</div>
+</div>
+
+<nav class="mobile">
+<button class="active" onclick="page('home',this)"><span>🏠</span>Home</button>
+<button onclick="page('transaksi',this)"><span>📋</span>Transaksi</button>
+<button onclick="page('produk',this)"><span>📦</span>Produk</button>
+<button onclick="page('customer',this)"><span>👥</span>Customer</button>
+<button onclick="page('laporan',this)"><span>📊</span>Laporan</button>
+</nav>
+
+<script>
+/* FIREBASE CONFIG */
+const firebaseConfig={
+apiKey:"AIzaSyAK7BFD2Am7fLlTDdJ2bwol7rWpLkHKy7M",
+authDomain:"jago-99b4c.firebaseapp.com",
+databaseURL:"https://jago-99b4c-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"jago-99b4c",
+storageBucket:"jago-99b4c.firebasestorage.app",
+messagingSenderId:"702429431809",
+appId:"1:702429431809:web:e82feedc5ff20e2e405800",
+measurementId:"G-9SQR7LPW6X"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const cloudRef=db.ref("greenvilleFinance/data");
+
+/* DATA */
+const $=id=>document.getElementById(id);
+const money=n=>"Rp"+Number(n||0).toLocaleString("id-ID");
+const today=()=>new Date().toISOString().slice(0,10);
+const month=()=>today().slice(0,7);
+
+let customers=[],transactions=[],payments=[],products=[],referrals=[];
+let loaded=false;
+
+$("periode").value=month();
+$("paydate").value=today();
+
+/* LOCAL BACKUP */
+function localSave(){
+localStorage.setItem("nero_customers",JSON.stringify(customers));
+localStorage.setItem("nero_transactions",JSON.stringify(transactions));
+localStorage.setItem("nero_payments",JSON.stringify(payments));
+localStorage.setItem("nero_products",JSON.stringify(products));
+localStorage.setItem("nero_referrals",JSON.stringify(referrals));
+}
+function localLoad(){
+customers=JSON.parse(localStorage.getItem("nero_customers")||"[]");
+transactions=JSON.parse(localStorage.getItem("nero_transactions")||"[]");
+payments=JSON.parse(localStorage.getItem("nero_payments")||"[]");
+products=JSON.parse(localStorage.getItem("nero_products")||"[]");
+referrals=JSON.parse(localStorage.getItem("nero_referrals")||"[]");
+}
+
+/* SAVE TO FIREBASE */
+async function save(){
+localSave();
+if(!loaded)return;
+$("connection").textContent="☁ Menyimpan...";
+try{
+await cloudRef.set({customers,transactions,payments,products,referrals});
+$("connection").textContent="☁ Firebase tersinkron";
+}catch(e){
+$("connection").textContent="⚠ Firebase gagal menyimpan";
+console.error(e);
+alert("Firebase gagal menyimpan: "+e.message);
+}
+}
+
+/* LOAD FROM FIREBASE */
+async function loadFirebaseData(){
+$("connection").textContent="☁ Menghubungkan Firebase...";
+try{
+const snap=await cloudRef.once("value");
+const data=snap.val();
+if(data){
+customers=data.customers||[];
+transactions=data.transactions||[];
+payments=data.payments||[];
+products=data.products||[];
+referrals=data.referrals||[];
+localSave();
+}else{
+localLoad();
+}
+loaded=true;
+render();
+if(!data)await save();
+$("connection").textContent="☁ Firebase tersinkron";
+}catch(e){
+localLoad();
+loaded=false;
+render();
+$("connection").textContent="⚠ Offline / Firebase belum aktif";
+console.error(e);
+}
+}
+
+/* NAVIGATION */
+function page(id,btn){
+document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+$(id).classList.add("active");
+document.querySelectorAll("nav button,.menu button").forEach(x=>x.classList.remove("active"));
+if(btn)btn.classList.add("active");
+render();
+}
+
+/* HELPERS */
+function total(t){return t.qty*t.sale}
+function capital(t){return t.qty*t.cost}
+function paid(t){return payments.filter(p=>p.transactionId==t.id).reduce((s,p)=>s+p.amount,0)}
+function remain(t){return Math.max(0,total(t)-paid(t))}
+function due(t){return t.date.slice(0,7)+"-28"}
+
+/* CUSTOMER */
+async function addCustomer(){
+if(!$("cname").value.trim())return alert("Isi nama customer");
+customers.push({id:Date.now(),name:$("cname").value.trim(),wa:$("cwa").value});
+$("cname").value="";$("cwa").value="";
+render();await save();
+}
+
+/* PRODUCT */
+async function addProduct(){
+if(!$("pname").value.trim())return alert("Isi nama barang");
+products.push({id:Date.now(),name:$("pname").value.trim(),cost:+$("pcost").value,sale:+$("psale").value});
+$("pname").value="";$("pcost").value="";$("psale").value="";
+render();await save();
+}
+
+/* REFERRAL */
+async function addReferral(){
+if(!$("rname").value.trim())return alert("Isi nama referral");
+referrals.push({id:Date.now(),name:$("rname").value.trim(),fee:+$("rfee").value});
+$("rname").value="";$("rfee").value="";
+render();await save();
+}
+
+/* TRANSACTION */
+async function addTransaction(){
+let c=customers.find(x=>x.id==$("tcustomer").value);
+let p=products.find(x=>x.id==$("tproduct").value);
+let qty=+$("qty").value;
+if(!c||!p||qty<=0)return alert("Pilih customer, barang, dan jumlah");
+transactions.push({
+id:Date.now(),customerId:c.id,customer:c.name,
+date:today(),product:p.name,productId:p.id,
+qty,cost:p.cost,sale:p.sale,commission:0
+});
+$("qty").value=1;
+render();await save();
+alert("Barang keluar berhasil dicatat!");
+}
+
+/* PAYMENT */
+async function addPayment(){
+let t=transactions.find(x=>x.id==$("paytx").value);
+let a=+$("payamount").value;
+if(!t||a<=0)return alert("Pilih transaksi dan nominal");
+if(a>remain(t))return alert("Nominal melebihi sisa tagihan");
+payments.push({id:Date.now(),transactionId:t.id,date:$("paydate").value,amount:a});
+$("payamount").value="";
+render();await save();
+alert("Pembayaran dicatat");
+}
+
+/* RENDER */
+function render(){
+let per=$("periode").value||month();
+let tx=transactions.filter(t=>t.date.slice(0,7)==per);
+let pay=payments.filter(p=>p.date.slice(0,7)==per);
+let omzet=tx.reduce((s,t)=>s+total(t),0);
+let modal=tx.reduce((s,t)=>s+capital(t),0);
+let komisi=tx.reduce((s,t)=>s+(t.commission||0),0);
+let profit=omzet-modal-komisi;
+
+$("modal").textContent=money(modal);
+$("omzet").textContent=money(omzet);
+$("profit").textContent=money(profit);
+
+let dueTx=transactions.filter(t=>due(t).slice(0,7)==per&&remain(t)>0);
+let overdue=transactions.filter(t=>due(t)<today()&&remain(t)>0);
+$("dueTotal").textContent=money(dueTx.reduce((s,t)=>s+remain(t),0));
+$("dueCount").textContent=overdue.length+" transaksi menunggak";
+$("dueList").innerHTML=overdue.slice(0,5).map(t=>
+`<div class="item"><b>${t.customer}</b><br>${t.product}<br>${money(remain(t))}</div>`
+).join("")||"<div class='item'>Tidak ada tunggakan 🎉</div>";
+
+$("refTotal").textContent=money(komisi);
+$("refList").innerHTML=referrals.map(r=>`<div class="item">${r.name}</div>`).join("");
+
+$("recent").innerHTML=tx.slice(-5).reverse().map(t=>
+`<div class="item"><b>${t.product}</b><br><small>Diterima: ${t.customer}</small><span style="float:right">${money(total(t))}</span></div>`
+).join("")||"Belum ada transaksi";
+
+$("chart").innerHTML=[1,2,3,4].map((x,i)=>
+`<div class="barwrap"><div class="bar" style="height:${35+i*25}px"></div><div class="bar bar2" style="height:${25+i*18}px"></div></div>`
+).join("");
+
+$("productProfit").innerHTML=products.map(p=>{
+let ts=tx.filter(t=>t.productId==p.id);
+let pr=ts.reduce((s,t)=>s+total(t)-capital(t),0);
+return `<div class="item"><b>${p.name}</b><span style="float:right">${money(pr)}</span></div>`;
+}).join("")||"Belum ada produk";
+
+$("tcustomer").innerHTML=customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+$("tproduct").innerHTML=products.map(p=>`<option value="${p.id}">${p.name} • ${money(p.sale)}</option>`).join("");
+let p=products.find(x=>x.id===$("tproduct").value*1);
+$("costView").value=p?p.cost:0;
+$("saleView").value=p?p.sale:0;
+$("tproduct").onchange=()=>{
+let p=products.find(x=>x.id===$("tproduct").value*1);
+$("costView").value=p?p.cost:0;
+$("saleView").value=p?p.sale:0;
+};
+
+$("customers").innerHTML=customers.map(c=>
+`<div class="item"><b>${c.name}</b><br>${c.wa||"-"}<button class="btn red" onclick="del('customers',${c.id})">Hapus</button></div>`
+).join("")||"Belum ada customer";
+
+$("products").innerHTML=products.map(p=>
+`<div class="item"><b>${p.name}</b><br>Modal ${money(p.cost)} • Jual ${money(p.sale)}<button class="btn red" onclick="del('products',${p.id})">Hapus</button></div>`
+).join("")||"Belum ada produk";
+
+$("referrals").innerHTML=referrals.map(r=>
+`<div class="item"><b>${r.name}</b> • Komisi ${money(r.fee)}</div>`
+).join("")||"Belum ada referral";
+
+$("transactions").innerHTML=transactions.slice().reverse().map(t=>
+`<div class="item"><b>${t.customer}</b> • ${t.product}<br><small>${t.date} • ${t.qty} pcs</small><br>Penjualan ${money(total(t))} • Sisa ${money(remain(t))}<button class="btn red" onclick="del('transactions',${t.id})">Hapus</button></div>`
+).join("")||"Belum ada transaksi";
+
+$("paytx").innerHTML=transactions.map(t=>
+`<option value="${t.id}">${t.customer} • ${t.product} • ${money(remain(t))}</option>`
+).join("");
+
+$("payments").innerHTML=pay.slice().reverse().map(p=>
+`<div class="item">${p.date} • ${money(p.amount)}</div>`
+).join("")||"Belum ada pembayaran";
+
+$("report").innerHTML=`
+<div class="item">Periode <b>${per}</b></div>
+<div class="item">Omzet <b>${money(omzet)}</b></div>
+<div class="item">Modal <b>${money(modal)}</b></div>
+<div class="item">Profit bersih <b>${money(profit)}</b></div>
+<div class="item">Pembayaran masuk <b>${money(pay.reduce((s,p)=>s+p.amount,0))}</b></div>
+<div class="item">Piutang periode <b>${money(dueTx.reduce((s,t)=>s+remain(t),0))}</b></div>`;
+}
+
+/* DELETE */
+async function del(type,id){
+if(!confirm("Hapus data ini?"))return;
+if(type=="customers")customers=customers.filter(x=>x.id!=id);
+if(type=="products")products=products.filter(x=>x.id!=id);
+if(type=="transactions"){
+transactions=transactions.filter(x=>x.id!=id);
+payments=payments.filter(x=>x.transactionId!=id);
+}
+render();await save();
+}
+
+/* EXPORT */
+function exportCSV(){
+let rows=[["Tanggal","Customer","Produk","Qty","Omzet","Modal","Profit"]];
+transactions.filter(t=>t.date.slice(0,7)==$("periode").value).forEach(t=>
+rows.push([t.date,t.customer,t.product,t.qty,total(t),capital(t),total(t)-capital(t)])
+);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(";")).join("\n")],{type:"text/csv"}));
+a.download="Greenville-"+$("periode").value+".csv";a.click();
+}
+function backup(){
+let a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([JSON.stringify({customers,transactions,payments,products,referrals},null,2)],{type:"application/json"}));
+a.download="Greenville-backup.json";a.click();
+}
+
+/* START */
+$("periode").onchange=()=>render();
+localLoad();
+render();
+loadFirebaseData();
+</script>
+</body>
+</html>
